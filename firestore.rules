@@ -53,11 +53,9 @@ service cloud.firestore {
     // MEETINGS
     match /meetings/{meetingId} {
       allow read: if request.auth != null;
-      // Allow create if authenticated (enforced by UI for Admin/Manager, but service allows creation)
-      allow create: if request.auth != null;
-      // Allow update if creator or Admin/Manager
-      allow update: if request.auth != null && (resource.data.createdBy == request.auth.uid || isManager());
-      allow delete: if request.auth != null && (resource.data.createdBy == request.auth.uid || isManager());
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }

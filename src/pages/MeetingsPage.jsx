@@ -58,8 +58,7 @@ const MeetingsPage = () => {
     // Let's just open the form and let the form or service validate, or hide the "Create" action if not admin.
     // But the requirement said: "click into date area to modal create open"
 
-    if (["admin", "manager"].includes(userRole?.toLowerCase())) {
-      // Assuming Manager can also create for now, or just Admin
+    if (userRole?.toLowerCase() === "admin") {
       setSelectedDate(day);
       setMeetingToEdit(null);
       setIsFormOpen(true);
@@ -130,7 +129,7 @@ const MeetingsPage = () => {
           >
             Hôm nay
           </button>
-          {["admin", "manager"].includes(userRole?.toLowerCase()) && (
+          {userRole?.toLowerCase() === "admin" && (
             <button
               onClick={() => {
                 setSelectedDate(new Date());
@@ -172,7 +171,7 @@ const MeetingsPage = () => {
                 key={date.toString()}
                 className={`min-h-[140px] bg-white p-2 relative group transition-colors hover:bg-gray-50 
                                     ${!isCurrentMonth ? "bg-gray-50/30 text-gray-400" : "text-gray-700"}
-                                    ${["admin", "manager"].includes(userRole?.toLowerCase()) ? "cursor-pointer" : ""}
+                                    ${userRole?.toLowerCase() === "admin" ? "cursor-pointer" : ""}
                                 `}
                 onClick={() => onDateClick(date)}
               >
@@ -224,7 +223,7 @@ const MeetingsPage = () => {
                 </div>
 
                 {/* Hover Effect for Add (Admin only) */}
-                {["admin", "manager"].includes(userRole?.toLowerCase()) && (
+                {userRole?.toLowerCase() === "admin" && (
                   <div className="absolute inset-0 bg-primary-50/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                     <Plus className="text-primary-200 w-12 h-12" />
                   </div>

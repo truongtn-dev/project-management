@@ -8,7 +8,9 @@ import { format } from 'date-fns';
 
 const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSave }) => {
     const { currentUser, userRole } = useAuth();
+    const isAdmin = userRole?.toLowerCase() === 'admin';
     const [loading, setLoading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const [sendingEmail, setSendingEmail] = useState(false);
     const [users, setUsers] = useState([]);
     const [formData, setFormData] = useState({
@@ -146,6 +148,23 @@ const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSa
         }
     };
 
+    const handleDelete = async () => {
+        if (!meetingToEdit) return;
+        if (!window.confirm('Bạn có chắc chắn muốn xóa cuộc họp này? Action này không thể hoàn tác.')) return;
+
+        setDeleting(true);
+        try {
+            await meetingService.deleteMeeting(meetingToEdit.id);
+            if (onSave) onSave();
+            onClose();
+        } catch (error) {
+            console.error('Error deleting meeting:', error);
+            alert('Xóa cuộc họp thất bại');
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -153,7 +172,7 @@ const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSa
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h2 className="text-xl font-bold text-gray-800">
-                        {meetingToEdit ? 'Edit Meeting' : 'Schedule New Meeting'}
+                        {meetingToEdit ? (isAdmin ? 'Chỉnh sửa lịch họp' : 'Chi tiết lịch họp') : 'Hẹn lịch họp mới'}
                     </h2>
                     <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
                         <X size={20} />
@@ -170,9 +189,10 @@ const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSa
                                     type="text"
                                     name="title"
                                     required
+                                    disabled={!isAdmin}
                                     value={formData.title}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                     placeholder="e.g., Weekly Sync"
                                 />
                             </div>
@@ -183,9 +203,10 @@ const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSa
                                     <input
                                         type="url"
                                         name="link"
+                                        disabled={!isAdmin}
                                         value={formData.link}
                                         onChange={handleChange}
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                         placeholder="https://meet.google.com/..."
                                     />
                                 </div>
@@ -202,9 +223,10 @@ const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSa
                                         type="date"
                                         name="date"
                                         required
+                                        disabled={!isAdmin}
                                         value={formData.date}
                                         onChange={handleChange}
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                     />
                                 </div>
                             </div>
@@ -216,9 +238,10 @@ const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSa
                                         type="time"
                                         name="time"
                                         required
+                                        disabled={!isAdmin}
                                         value={formData.time}
                                         onChange={handleChange}
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                     />
                                 </div>
                             </div>
@@ -230,9 +253,10 @@ const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSa
                                     required
                                     min="15"
                                     step="15"
+                                    disabled={!isAdmin}
                                     value={formData.duration}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                 />
                             </div>
                         </div>
@@ -242,10 +266,11 @@ const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSa
                             <label className="text-sm font-medium text-gray-700">Description</label>
                             <textarea
                                 name="description"
+                                disabled={!isAdmin}
                                 value={formData.description}
                                 onChange={handleChange}
                                 rows="3"
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none resize-none"
+                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none resize-none disabled:bg-gray-50 disabled:text-gray-500"
                                 placeholder="Meeting agenda..."
                             />
                         </div>
@@ -262,9 +287,10 @@ const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSa
                                         <label key={user.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-md cursor-pointer transition-colors">
                                             <input
                                                 type="checkbox"
+                                                disabled={!isAdmin}
                                                 checked={formData.participantIds.includes(user.uid)}
                                                 onChange={() => handleParticipantToggle(user.uid)}
-                                                className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                                                className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500 disabled:opacity-50"
                                             />
                                             <div className="flex items-center gap-2">
                                                 <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-xs font-bold">
@@ -284,25 +310,36 @@ const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSa
 
                     <div className="pt-4 border-t border-gray-100 flex justify-between items-center bg-gray-50/30 p-4 -mx-6 -mb-6">
                         <div className="flex gap-2">
-                            {meetingToEdit && (['admin', 'manager'].includes(userRole?.toLowerCase())) && (
-                                <button
-                                    type="button"
-                                    onClick={handleSendEmail}
-                                    disabled={sendingEmail || !meetingToEdit.participantIds?.length}
-                                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all
-                                        ${meetingToEdit.isEmailSent
-                                            ? 'bg-green-50 text-green-700 border border-green-200'
-                                            : 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100'}`}
-                                >
-                                    {sendingEmail ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : meetingToEdit.isEmailSent ? (
-                                        <CheckCircle className="w-4 h-4" />
-                                    ) : (
-                                        <Mail className="w-4 h-4" />
-                                    )}
-                                    {meetingToEdit.isEmailSent ? 'Đã gửi Email' : 'Gửi Email Mời Họp'}
-                                </button>
+                            {meetingToEdit && isAdmin && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={handleDelete}
+                                        disabled={deleting}
+                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-all disabled:opacity-50"
+                                    >
+                                        {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <X size={18} />}
+                                        Xóa lịch
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleSendEmail}
+                                        disabled={sendingEmail || !meetingToEdit.participantIds?.length}
+                                        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all
+                                            ${meetingToEdit.isEmailSent
+                                                ? 'bg-green-50 text-green-700 border border-green-200'
+                                                : 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100'}`}
+                                    >
+                                        {sendingEmail ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : meetingToEdit.isEmailSent ? (
+                                            <CheckCircle className="w-4 h-4" />
+                                        ) : (
+                                            <Mail className="w-4 h-4" />
+                                        )}
+                                        {meetingToEdit.isEmailSent ? 'Đã gửi Email' : 'Gửi Email Mời Họp'}
+                                    </button>
+                                </>
                             )}
                         </div>
                         <div className="flex gap-3">
@@ -311,16 +348,18 @@ const MeetingForm = ({ isOpen, onClose, selectedDate, meetingToEdit = null, onSa
                                 onClick={onClose}
                                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                             >
-                                Cancel
+                                {isAdmin ? 'Hủy' : 'Đóng'}
                             </button>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
-                            >
-                                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                                {meetingToEdit ? 'Update Meeting' : 'Schedule Meeting'}
-                            </button>
+                            {isAdmin && (
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+                                >
+                                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    {meetingToEdit ? 'Cập nhật lịch' : 'Tạo lịch ngay'}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </form>
